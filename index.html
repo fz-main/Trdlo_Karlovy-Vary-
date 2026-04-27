@@ -1,1 +1,610 @@
 
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Karlovy Vary Trdlo | Tradiční trdelník</title>
+  <!-- Google Fonts + Font Awesome 6 -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Leaflet for perfect map integration no overflow -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background: #fef6e8;
+      color: #2c1c0c;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* ----- MEGA INTRO ANIMATION (CINNAMON SPICE + TRDELNIK) ----- */
+    .intro-splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 20%, #ffe6c7, #d9a13b);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 1.2rem;
+      transition: opacity 1s cubic-bezier(0.2, 0.9, 0.4, 1.2), visibility 0s 1.2s;
+      backdrop-filter: blur(2px);
+    }
+
+    .intro-splash.hide {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .trdlo-3d {
+      font-size: 5rem;
+      filter: drop-shadow(0 15px 20px rgba(0,0,0,0.2));
+      animation: rotateBread 1.5s infinite alternate ease-in-out;
+    }
+
+    @keyframes rotateBread {
+      0% { transform: translateY(0px) rotate(-6deg); text-shadow: 0 0 0 #ffbb77; }
+      100% { transform: translateY(-20px) rotate(6deg); text-shadow: 0 12px 20px #aa6f2c; }
+    }
+
+    .splash-title {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, #5e2e0f, #b9631c);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: titleGlow 1.4s infinite alternate;
+    }
+
+    @keyframes titleGlow {
+      0% { text-shadow: 0 0 0px #ffd58c; opacity: 0.9; }
+      100% { text-shadow: 0 0 12px #ffbc6e; opacity: 1; }
+    }
+
+    .splash-sub {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #412a12;
+    }
+
+    /* main site entrance */
+    .main-site {
+      opacity: 0;
+      transform: scale(0.98) translateY(20px);
+      transition: opacity 0.9s ease 0.2s, transform 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.2);
+    }
+
+    .main-site.visible {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    /* navbar warm glass */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(253, 242, 224, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid #f7cf9f;
+      padding: 1rem 0;
+    }
+
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    .nav-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #bc6f1a;
+    }
+
+    .logo span {
+      background: #ffdeae;
+      padding: 4px 12px;
+      border-radius: 40px;
+      font-size: 1rem;
+    }
+
+    .lang-switch {
+      display: flex;
+      gap: 8px;
+      background: #fff2e2;
+      padding: 5px 14px;
+      border-radius: 60px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+
+    .lang-btn {
+      background: transparent;
+      border: none;
+      font-weight: 600;
+      font-size: 0.8rem;
+      padding: 6px 12px;
+      border-radius: 40px;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #7b4a1a;
+    }
+
+    .lang-btn.active {
+      background: #c97e2a;
+      color: white;
+    }
+
+    /* hero */
+    .hero {
+      background: linear-gradient(105deg, #fff0df 0%, #ffebd2 100%);
+      padding: 70px 0 80px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero:before {
+      content: "🍩🥨";
+      font-size: 250px;
+      opacity: 0.08;
+      position: absolute;
+      bottom: -30px;
+      right: -20px;
+      pointer-events: none;
+    }
+    .hero-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 40px;
+    }
+    .hero-content {
+      flex: 1.2;
+    }
+    .hero-badge {
+      background: #e4b07730;
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 60px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 3.7rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .text-sweet {
+      color: #c2671a;
+    }
+    .cta-btn {
+      background: #b45f1b;
+      padding: 14px 34px;
+      border-radius: 44px;
+      font-weight: 700;
+      display: inline-block;
+      margin-top: 32px;
+      transition: 0.2s;
+      box-shadow: 0 5px 14px #d48d3f60;
+      text-decoration: none;
+      color: white;
+    }
+    .cta-btn:hover {
+      background: #934a10;
+      transform: scale(1.02);
+    }
+
+    /* cards */
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #43270e;
+    }
+    .section-sub {
+      color: #b46f35;
+      margin-bottom: 3rem;
+      font-weight: 500;
+    }
+    .grid-advantage, .services-grid, .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 30px;
+      margin: 40px 0 30px;
+    }
+    .card-sweet {
+      background: #ffffffdb;
+      backdrop-filter: blur(2px);
+      border-radius: 42px;
+      padding: 28px 20px;
+      transition: all 0.3s;
+      border: 1px solid #ffe2bc;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.02);
+    }
+    .card-sweet:hover {
+      transform: translateY(-8px);
+      border-color: #f3bc7c;
+      background: #fffaf2;
+      box-shadow: 0 18px 30px rgba(160, 80, 10, 0.1);
+    }
+    .card-sweet i {
+      font-size: 2.8rem;
+      color: #d4792c;
+      margin-bottom: 20px;
+    }
+    .price-badge {
+      font-weight: 800;
+      font-size: 1.4rem;
+      color: #aa5517;
+      margin-top: 16px;
+      display: inline-block;
+    }
+
+    /* map section */
+    .map-wrapper {
+      border-radius: 48px;
+      overflow: hidden;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.1);
+      height: 380px;
+      border: 2px solid #ffdbb5;
+    }
+    #trdloMap {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+    .info-glass {
+      display: flex;
+      flex-wrap: wrap;
+      background: #fff1e2;
+      border-radius: 60px;
+      margin-top: 30px;
+      padding: 20px 32px;
+      justify-content: space-between;
+      gap: 20px;
+    }
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+    }
+    .info-item i {
+      font-size: 1.8rem;
+      color: #c96f1e;
+    }
+    footer {
+      text-align: center;
+      padding: 28px;
+      background: #f4e2ce;
+      color: #5c3b17;
+      font-weight: 500;
+    }
+    @media (max-width: 760px) {
+      h1 { font-size: 2.5rem; }
+      .section-title { font-size: 2rem; }
+      .info-glass { flex-direction: column; align-items: center; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MEGA INTRO ANIMATION -->
+<div class="intro-splash" id="introSplash">
+  <div class="trdlo-3d">
+    <i class="fas fa-utensils"></i> 🥨 <i class="fas fa-mug-hot"></i>
+  </div>
+  <div class="splash-title">Karlovy Vary Trdlo</div>
+  <div class="splash-sub">🌿 Pravé karlovarské trdelníky • ruční pečení</div>
+</div>
+
+<main class="main-site" id="mainSite">
+  <nav class="navbar">
+    <div class="container nav-flex">
+      <div class="logo">🍥 Trdlo <span>Karlovy Vary</span></div>
+      <div class="lang-switch" id="langSwitch">
+        <button class="lang-btn active" data-lang="cs">Čeština</button>
+        <button class="lang-btn" data-lang="en">English</button>
+        <button class="lang-btn" data-lang="de">Deutsch</button>
+        <button class="lang-btn" data-lang="ru">Русский</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO INTRO PAGE -->
+  <section class="hero">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-badge" data-translate="heroBadge">🍯 tradice od roku 2024</div>
+        <h1><span data-translate="heroTitle1">Voňavé trdelníky</span><br><span class="text-sweet" data-translate="heroTitle2">pečené s láskou</span></h1>
+        <p data-translate="heroDesc" style="font-size:1.15rem; max-width:560px">Skvost karlovarských uliček. Křupavý karamel, skořice, ořechy a polevy, které rozproudí chuťové pohárky. Navštivte naše malebné místo na Tržišti.</p>
+        <a href="#menuSection" class="cta-btn" data-translate="heroBtn"><i class="fas fa-cookie-bite"></i> Objevte menu</a>
+      </div>
+      <div style="flex:0.7; text-align:center;">
+        <i class="fas fa-bread-slice" style="font-size: 7rem; opacity: 0.2; color:#c97a1e;"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADVANTAGES -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="advTitle">✨ Proč milujeme naše trdelníky</h2>
+      <div class="section-sub" data-translate="advSub">Každý kousek je ručně vyráběný z čerstvého těsta</div>
+      <div class="grid-advantage">
+        <div class="card-sweet"><i class="fas fa-seedling"></i><h3 data-translate="adv1Title">Přírodní ingredience</h3><p data-translate="adv1Desc">Bez konzervantů, prémiová mouka, máslo, vanilka a pravý karamel.</p></div>
+        <div class="card-sweet"><i class="fas fa-fire"></i><h3 data-translate="adv2Title">Tradiční pečení na ohni</h3><p data-translate="adv2Desc">Dřevěné uhlí + mistrovská technika = dokonalá křupavost.</p></div>
+        <div class="card-sweet"><i class="fas fa-heart"></i><h3 data-translate="adv3Title">Originální polevy</h3><p data-translate="adv3Desc">Ořechy, skořice, kokos, čokoláda  nebo slané karamel.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES / COMFORT -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="servicesTitle">☕️ Sladké služby</h2>
+      <div class="section-sub" data-translate="servicesSub">Vychutnejte si zážitek na maximum</div>
+      <div class="services-grid">
+        <div class="card-sweet"><i class="fas fa-mug-saucer"></i><h3 data-translate="serv1">Káva & trdelník set</h3><p data-translate="serv1Desc">Lavazza espresso nebo vídeňská káva + teplý trdelník.</p><span class="price-badge">145 Kč</span></div>
+        <div class="card-sweet"><i class="fas fa-wifi"></i><h3 data-translate="serv2">Zahrádka & posezení</h3><p data-translate="serv2Desc">Venkovní místa s výhledem na historické centrum.</p></div>
+        <div class="card-sweet"><i class="fas fa-gift"></i><h3 data-translate="serv3">Dárkové balení</h3><p data-translate="serv3Desc">Trdelník na cesty / sladký dárek z Karlových Varů.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSORTMENT (menu / variety) -->
+  <section id="menuSection">
+    <div class="container">
+      <h2 class="section-title" data-translate="assortTitle">🍬 Náš trdelníkový sortiment</h2>
+      <div class="section-sub" data-translate="assortSub">Klasika i netradiční verze</div>
+      <div class="menu-grid">
+        <div class="card-sweet"><i class="fas fa-cinnamon-roll"></i><h3 data-translate="item1">Skořicový sen</h3><p data-translate="item1Desc">Křupavý obal ze skořice a třtinového cukru.</p><span class="price-badge">95 Kč</span></div>
+        <div class="card-sweet"><i class="fas fa-chocolate-bar"></i><h3 data-translate="item2">Oříšková exploze</h3><p data-translate="item2Desc">Lískooříšky + bílá čokoláda, mandle.</p><span class="price-badge">110 Kč</span></div>
+        <div class="card-sweet"><i class="fas fa-ice-cream"></i><h3 data-translate="item3">Trdlo zmrzlinové</h3><p data-translate="item3Desc">Vanilková zmrzlina a čerstvé ovoce uvnitř.</p><span class="price-badge">139 Kč</span></div>
+        <div class="card-sweet"><i class="fas fa-pepper-hot"></i><h3 data-translate="item4">Slaný karamel & pekan</h3><p data-translate="item4Desc">Slaný karamel a pražené pekanové ořechy.</p><span class="price-badge">125 Kč</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GOOGLE MAP & EXACT location from URL -->
+  <section>
+    <div class="container">
+      <h2 class="section-title" data-translate="mapTitle">📍 Zastavte se u nás</h2>
+      <div class="section-sub" data-translate="mapSub">Tržiště 37, srdce lázeňského centra</div>
+      <div class="map-wrapper">
+        <div id="trdloMap"></div>
+      </div>
+      <div class="info-glass">
+        <div class="info-item"><i class="fas fa-location-dot"></i> <span data-translate="address">23, Tržiště 37, 360 01 Karlovy Vary</span></div>
+        <div class="info-item"><i class="fas fa-phone-alt"></i> <a href="tel:+420725964502" style="color:#a35118; text-decoration:none;">+420 725 964 502</a></div>
+        <div class="info-item"><i class="fas fa-clock"></i> <span data-translate="hours">Po–Ne: 10:00 – 20:00</span></div>
+        <div class="info-item"><i class="fas fa-instagram"></i> @karlovyvarytrdlo</div>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <p>🍩 Karlovy Vary Trdlo — tradiční pečení s vůní štěstí | <span data-translate="footerText">těšíme se na vaši návštěvu</span></p>
+  </footer>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ---- MULTILINGUAL FULL DATA (based on google maps info) ----
+  const langData = {
+    cs: {
+      heroBadge: "🍯 tradice od roku 2024",
+      heroTitle1: "Voňavé trdelníky",
+      heroTitle2: "pečené s láskou",
+      heroDesc: "Skvost karlovarských uliček. Křupavý karamel, skořice, ořechy a polevy, které rozproudí chuťové pohárky. Navštivte naše malebné místo na Tržišti.",
+      heroBtn: "Objevte menu",
+      advTitle: "✨ Proč milujeme naše trdelníky",
+      advSub: "Každý kousek je ručně vyráběný z čerstvého těsta",
+      adv1Title: "Přírodní ingredience",
+      adv1Desc: "Bez konzervantů, prémiová mouka, máslo, vanilka a pravý karamel.",
+      adv2Title: "Tradiční pečení na ohni",
+      adv2Desc: "Dřevěné uhlí + mistrovská technika = dokonalá křupavost.",
+      adv3Title: "Originální polevy",
+      adv3Desc: "Ořechy, skořice, kokos, čokoláda nebo slané karamel.",
+      servicesTitle: "☕️ Sladké služby",
+      servicesSub: "Vychutnejte si zážitek na maximum",
+      serv1: "Káva & trdelník set",
+      serv1Desc: "Lavazza espresso nebo vídeňská káva + teplý trdelník.",
+      serv2: "Zahrádka & posezení",
+      serv2Desc: "Venkovní místa s výhledem na historické centrum.",
+      serv3: "Dárkové balení",
+      serv3Desc: "Trdelník na cesty / sladký dárek z Karlových Varů.",
+      assortTitle: "🍬 Náš trdelníkový sortiment",
+      assortSub: "Klasika i netradiční verze",
+      item1: "Skořicový sen",
+      item1Desc: "Křupavý obal ze skořice a třtinového cukru.",
+      item2: "Oříšková exploze",
+      item2Desc: "Lískooříšky + bílá čokoláda, mandle.",
+      item3: "Trdlo zmrzlinové",
+      item3Desc: "Vanilková zmrzlina a čerstvé ovoce uvnitř.",
+      item4: "Slaný karamel & pekan",
+      item4Desc: "Slaný karamel a pražené pekanové ořechy.",
+      mapTitle: "📍 Zastavte se u nás",
+      mapSub: "Tržiště 37, srdce lázeňského centra",
+      address: "23, Tržiště 37, 360 01 Karlovy Vary",
+      hours: "Po–Ne: 10:00 – 20:00",
+      footerText: "těšíme se na vaši návštěvu"
+    },
+    en: {
+      heroBadge: "🍯 traditional since 2024",
+      heroTitle1: "Aromatic Trdelník",
+      heroTitle2: "baked with love",
+      heroDesc: "Gem of Karlovy Vary streets. Crunchy caramel, cinnamon, nuts and toppings. Visit our cozy spot at Tržiště.",
+      heroBtn: "Discover menu",
+      advTitle: "✨ Why we love our trdelníks",
+      advSub: "Each piece is handmade from fresh dough",
+      adv1Title: "Natural ingredients",
+      adv1Desc: "No preservatives, premium flour, butter, vanilla and pure caramel.",
+      adv2Title: "Traditional fire baking",
+      adv2Desc: "Charcoal + master technique = perfect crispiness.",
+      adv3Title: "Unique toppings",
+      adv3Desc: "Nuts, cinnamon, coconut, chocolate or salted caramel.",
+      servicesTitle: "☕️ Sweet services",
+      servicesSub: "Enjoy the full experience",
+      serv1: "Coffee & Trdelník set",
+      serv1Desc: "Lavazza espresso or Viennese coffee + warm trdelník.",
+      serv2: "Terrace seating",
+      serv2Desc: "Outdoor places with historical center view.",
+      serv3: "Gift packaging",
+      serv3Desc: "Trdelník to go / sweet souvenir from Karlovy Vary.",
+      assortTitle: "🍬 Our trdelník assortment",
+      assortSub: "Classic & modern flavors",
+      item1: "Cinnamon dream",
+      item1Desc: "Crunchy cinnamon & cane sugar coating.",
+      item2: "Nut explosion",
+      item2Desc: "Hazelnuts + white chocolate & almonds.",
+      item3: "Ice cream trdlo",
+      item3Desc: "Vanilla ice cream & fresh fruit inside.",
+      item4: "Salted caramel & pecan",
+      item4Desc: "Salted caramel and roasted pecans.",
+      mapTitle: "📍 Come visit us",
+      mapSub: "Tržiště 37, heart of the spa center",
+      address: "23, Tržiště 37, 360 01 Karlovy Vary",
+      hours: "Mon–Sun: 10:00 – 20:00",
+      footerText: "we look forward to your visit"
+    },
+    de: {
+      heroBadge: "🍯 Tradition seit 2024",
+      heroTitle1: "Duftende Trdelník",
+      heroTitle2: "mit Liebe gebacken",
+      heroDesc: "Juwel der Karlsbader Gassen. Knuspriges Karamell, Zimt, Nüsse und Toppings. Besuchen Sie uns am Tržiště.",
+      heroBtn: "Menü entdecken",
+      advTitle: "✨ Warum wir unsere Trdelníks lieben",
+      advSub: "Jedes Stück handgemacht",
+      adv1Title: "Natürliche Zutaten",
+      adv1Desc: "Ohne Konservierungsstoffe, Premiummehl, Butter, Vanille.",
+      adv2Title: "Traditionelles Feuerbacken",
+      adv2Desc: "Holzkohle + Meistertechnik = perfekte Knusprigkeit.",
+      adv3Title: "Originelle Toppings",
+      adv3Desc: "Nüsse, Zimt, Kokos, Schokolade oder Salzkaramell.",
+      servicesTitle: "☕️ Süße Dienstleistungen",
+      servicesSub: "Genießen Sie das volle Erlebnis",
+      serv1: "Kaffee & Trdelník Set",
+      serv1Desc: "Lavazza Espresso + warmer Trdelník.",
+      serv2: "Terrasse & Sitzplätze",
+      serv2Desc: "Außenbereich mit Blick auf die Altstadt.",
+      serv3: "Geschenkverpackung",
+      serv3Desc: "Trdelník to go / süßes Souvenir.",
+      assortTitle: "🍬 Trdelník Sortiment",
+      assortSub: "Klassiker und moderne Variationen",
+      item1: "Zimttraum",
+      item1Desc: "Knusprige Zimt-Kruste.",
+      item2: "Nussexplosion",
+      item2Desc: "Haselnüsse + weiße Schokolade.",
+      item3: "Eis-Trdlo",
+      item3Desc: "Vanilleeis mit frischen Früchten.",
+      item4: "Salzkaramell & Pekan",
+      item4Desc: "Salzkaramell und geröstete Pekannüsse.",
+      mapTitle: "📍 Besuchen Sie uns",
+      mapSub: "Tržiště 37, Herzen des Kurorts",
+      address: "23, Tržiště 37, 360 01 Karlovy Vary",
+      hours: "Mo–So: 10:00 – 20:00",
+      footerText: "Wir freuen uns auf Ihren Besuch"
+    },
+    ru: {
+      heroBadge: "🍯 традиция с 2024",
+      heroTitle1: "Ароматные трудели",
+      heroTitle2: "с любовью из Карловых Вар",
+      heroDesc: "Жемчужина улочек Карловых Вар. Хрустящая карамель, корица, орехи. Заходите на Tržiště.",
+      heroBtn: "Посмотреть меню",
+      advTitle: "✨ Почему мы любим наши трудели",
+      advSub: "Каждый трудель сделан вручную",
+      adv1Title: "Натуральные ингредиенты",
+      adv1Desc: "Без консервантов, лучшая мука, масло, ваниль и карамель.",
+      adv2Title: "Выпечка на огне",
+      adv2Desc: "Древесный уголь + мастерство = идеальная хрусткость.",
+      adv3Title: "Уникальные топпинги",
+      adv3Desc: "Орехи, корица, кокос, шоколад, солёная карамель.",
+      servicesTitle: "☕️ Сладкие услуги",
+      servicesSub: "Максимальное наслаждение",
+      serv1: "Кофе + трудель",
+      serv1Desc: "Эспрессо Lavazza и тёплый трудель.",
+      serv2: "Терраса",
+      serv2Desc: "Уличные места с видом на исторический центр.",
+      serv3: "Подарочная упаковка",
+      serv3Desc: "Трудель с собой / сладкий сувенир.",
+      assortTitle: "🍬 Наш ассортимент труделей",
+      assortSub: "Классика и новинки",
+      item1: "Коричный сон",
+      item1Desc: "Хрустящая корица и тростниковый сахар.",
+      item2: "Ореховый взрыв",
+      item2Desc: "Фундук + белый шоколад.",
+      item3: "Трудель с мороженым",
+      item3Desc: "Ванильное мороженое и свежие фрукты.",
+      item4: "Солёная карамель & пекан",
+      item4Desc: "Соленая карамель и жареные орехи пекан.",
+      mapTitle: "📍 Где нас найти",
+      mapSub: "Tržiště 37, сердце курорта",
+      address: "23, Tržiště 37, 360 01 Karlovy Vary",
+      hours: "Пн–Вс: 10:00 – 20:00",
+      footerText: "ждём вас в гости"
+    }
+  };
+
+  let activeLang = 'cs';
+  function applyLanguage(lang) {
+    const dict = langData[lang];
+    if (!dict) return;
+    document.querySelectorAll('[data-translate]').forEach(el => {
+      const key = el.getAttribute('data-translate');
+      if (dict[key]) el.innerText = dict[key];
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      if(btn.dataset.lang === lang) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+    activeLang = lang;
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
+  });
+
+  // Intro hide + Map initialization
+  window.addEventListener('load', () => {
+    const introDiv = document.getElementById('introSplash');
+    const mainContent = document.getElementById('mainSite');
+    setTimeout(() => {
+      introDiv.classList.add('hide');
+      mainContent.classList.add('visible');
+    }, 1700);
+
+    // Leaflet map (coordinates Tržiště 37, Karlovy Vary)
+    const map = L.map('trdloMap').setView([50.2328, 12.8750], 17);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> & CartoDB',
+      subdomains: 'abcd'
+    }).addTo(map);
+    const marker = L.marker([50.23265, 12.8749]).addTo(map);
+    marker.bindPopup('<b>🍩 Karlovy Vary Trdlo</b><br>Tržiště 37, 360 01<br>☎ +420 725 964 502').openPopup();
+    setTimeout(() => map.invalidateSize(), 200);
+    window.addEventListener('resize', () => map.invalidateSize());
+  });
+</script>
+</body>
+</html>
